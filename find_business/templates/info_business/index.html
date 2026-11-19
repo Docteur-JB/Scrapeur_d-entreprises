@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats de Recherche d'Entreprises</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .export-buttons {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.export-buttons h5 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.btn-export {
+    margin: 5px;
+    transition: all 0.3s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+        .results-container {
+            margin-top: 20px;
+        }
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+        }
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        .results-count {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .entreprise-nom {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        /* Loader Styles */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loader-text {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .loader-details {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .blink {
+            animation: blink 60s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+
+
+
+<!-- Bootstrap Icons -->
+<!-- Remplacez le lien CDN par ceci dans le <head> -->
+<style>
+/* Icônes SVG intégrées */
+.bi {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    fill: currentColor;
+}
+</style>
+
+<!-- Script ExcelJS (utilisez un CDN de secours) -->
+<script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
+<!-- Library ExcelJS (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+<script>
+// Fonction pour exporter en Excel
+async function exportToExcel() {
+    try {
+        // Afficher un indicateur de chargement
+        const originalText = event.target.innerHTML;
+        event.target.innerHTML = '<i class="bi bi-hourglass-split"></i> Génération...';
+        event.target.disabled = true;
+
+        // Créer un nouveau workbook
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Entreprises');
+
+        // Ajouter les en-têtes
+        worksheet.addRow(['#', 'Nom', 'Téléphone', 'Adresse', 'Email', 'website']);
+
+        // Styliser les en-têtes
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+
+        // Ajouter les données
+        {% for entreprise in entreprises %}
+        worksheet.addRow([
+            '{{ forloop.counter }}',
+            '{{ entreprise.nom|default:"Non disponible" }}',
+            '{{ entreprise.telephone|default:"Non disponible" }}',
+            '{{ entreprise.adresse|default:"Non disponible" }}',
+            '{{ entreprise.email|default:"Non disponible" }}',
+            '{{ entreprise.website|default:"Non disponible" }}'
+        ]);
+        {% endfor %}
+
+        // Ajuster la largeur des colonnes
+        worksheet.columns = [
+            { width: 5 },  // #
+            { width: 30 }, // Nom
+            { width: 40 }, // Téléphone
+            { width: 60 }, // Adresse
+            { width: 40 },  // Email
+            { width: 40 }  // website
+        ];
+
+        // Générer le buffer Excel
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        // Créer le blob et télécharger
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        a.href = url;
+        a.download = 'entreprises_{{ keyword|slugify }}_{{ now|date:"Y-m-d" }}.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Restaurer le bouton
+        event.target.innerHTML = originalText;
+        event.target.disabled = false;
+
+    } catch (error) {
+        console.error('Erreur export Excel:', error);
+        alert('Erreur lors de l\'export Excel');
+        event.target.innerHTML = originalText;
+        event.target.disabled = false;
+    }
+}
+
+// Fonction pour exporter en CSV
+function exportToCSV() {
+    try {
+        let csv = '№;Nom;Téléphone;Adresse;Email;website\n';
+
+        {% for entreprise in entreprises %}
+        csv += `{{ forloop.counter }};` +
+               `"{{ entreprise.nom|default:"Non disponible" }}";` +
+               `"{{ entreprise.telephone|default:"Non disponible" }}";` +
+               `"{{ entreprise.adresse|default:"Non disponible" }}";` +
+               `"{{ entreprise.email|default:"Non disponible" }}"` +
+               `"{{ entreprise.website|default:"Non disponible" }}"` +
+               `\n`;
+        {% endfor %}
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        a.href = url;
+        a.download = 'entreprises_{{ keyword|slugify }}_{{ now|date:"Y-m-d" }}.csv';
+        a.style.display = 'none';
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+    } catch (error) {
+        console.error('Erreur export CSV:', error);
+        alert('Erreur lors de l\'export CSV');
+    }
+}
+</script>
+
+
+<body>
+   <a href="{% url 'deconnexion' %}">
+   <div>
+       <div class="loader-details"> Déconnexion </div>
+   </div>
+   </a>
+    <!-- Overlay de chargement -->
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="spinner"></div>
+        <div class="loader-text" id="loaderText">Recherche en cours...</div>
+        <div class="loader-details" id="loaderDetails">
+            Analyse des entreprises pour "<span id="searchKeyword"></span>"
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="loader-details blink">
+            ⏳ Cette opération peut prendre quelques minutes
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Formulaire de recherche -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">🔍 Rechercher des Entreprises</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'recherche_view' %}" id="searchForm" onsubmit="showLoader()">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="keyword" class="form-label">Mot-clé de recherche:</label>
+                                <input type="text" class="form-control" id="keyword" name="keyword"
+                                       value="{{ keyword|default:'' }}" placeholder="Ex: Restaurant, Informatique, Construction..." required>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100" id="searchButton">
+                                <span id="buttonText">🚀 Lancer la recherche</span>
+                                <span id="buttonSpinner" class="spinner-border spinner-border-sm" style="display: none;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Affichage des résultats -->
+        {% if entreprises %}
+        <div class="results-container">
+            <!-- Compteur de résultats -->
+            <div class="results-count">
+                📊 <strong>{{ entreprises|length }}</strong> entreprise(s) trouvée(s) pour "<strong>{{ keyword }}</strong>"
+            </div>
+            <!-- Boutons d'export -->
+        <div class="export-buttons">
+            <h5><i class="bi bi-download"></i> Exporter les résultats</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-success" onclick="exportToExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> Excel
+                </button>
+                <button class="btn btn-primary" onclick="exportToCSV()">
+                    <i class="bi bi-filetype-csv"></i> CSV
+                </button>
+                <button class="btn btn-secondary" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Imprimer
+                </button>
+            </div>
+        </div>
+            <!-- Tableau des résultats -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nom de l'Entreprise</th>
+                            <th>Téléphone</th>
+                            <th>Adresse</th>
+                            <th>Email</th>
+                            <th>Site web</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entreprise in entreprises %}
+                        <tr>
+                            <td class="fw-bold">{{ forloop.counter }}</td>
+                            <td>
+                                <span class="entreprise-nom">{{ entreprise.nom|default:"Non disponible" }}</span>
+                            </td>
+                            <td>
+                                {% if entreprise.telephone and entreprise.telephone != 'Non disponible' %}
+                                    {{ entreprise.telephone }}
+                                {% else %}
+                                    <span class="text-muted">Non disponible</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ entreprise.adresse|default:"Non disponible" }}
+                            </td>
+                            <td>
+                                {% if entreprise.email and entreprise.email != 'Non disponible' %}
+                                    {{ entreprise.email }}
+                                {% else %}
+                                    <span class="text-muted">Non disponible</span>
+                                {% endif %}
+                            </td>
+                           <td>
+                                {% if entreprise.website and entreprise.website != 'Non disponible' %}
+                                    <a href={{ entreprise.website }}>  {{ entreprise.website }}</a>
+                                {% else %}
+                                    <span class="text-muted">Non disponible</span>
+                                {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% elif keyword %}
+        <!-- Aucun résultat -->
+        <div class="no-results">
+            <div class="alert alert-warning">
+                <h4>ⓘ Aucun résultat trouvé</h4>
+                <p class="mb-0">Aucune entreprise ne correspond à votre recherche pour "{{ keyword }}"</p>
+                <p>Essayez avec d'autres mots-clés ou vérifiez l'orthographe.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Message d'erreur -->
+        {% if error %}
+        <div class="alert alert-danger mt-3">
+            <h5>❌ Erreur</h5>
+            <p class="mb-0">{{ error }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Fonction pour afficher le loader
+        function showLoader() {
+            const keyword = document.getElementById('keyword').value;
+            const loader = document.getElementById('loaderOverlay');
+            const searchButton = document.getElementById('searchButton');
+            const buttonText = document.getElementById('buttonText');
+            const buttonSpinner = document.getElementById('buttonSpinner');
+            const searchKeyword = document.getElementById('searchKeyword');
+            const progressFill = document.getElementById('progressFill');
+
+            // Mettre à jour le texte avec le keyword
+            searchKeyword.textContent = keyword;
+
+            // Afficher le loader
+            loader.style.display = 'flex';
+
+            // Désactiver le bouton et montrer le spinner
+            searchButton.disabled = true;
+            buttonText.style.display = 'none';
+            buttonSpinner.style.display = 'inline-block';
+
+            // Simulation de progression (optionnel)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 90) {
+                    progress = 90; // Ne pas aller à 100% pour garder l'effet
+                }
+                progressFill.style.width = progress + '%';
+            }, 500);
+
+            // Stocker l'interval pour le nettoyer si nécessaire
+            window.progressInterval = progressInterval;
+
+            // Le loader se cachera automatiquement quand la page se rechargera
+        }
+
+        // Fonction pour cacher le loader (au cas où)
+        function hideLoader() {
+            const loader = document.getElementById('loaderOverlay');
+            const searchButton = document.getElementById('searchButton');
+            const buttonText = document.getElementById('buttonText');
+            const buttonSpinner = document.getElementById('buttonSpinner');
+
+            loader.style.display = 'none';
+            searchButton.disabled = false;
+            buttonText.style.display = 'inline-block';
+            buttonSpinner.style.display = 'none';
+
+            if (window.progressInterval) {
+                clearInterval(window.progressInterval);
+            }
+        }
+
+        // Cacher le loader quand la page est complètement chargée
+        document.addEventListener('DOMContentLoaded', function() {
+            // Si la page se recharge (après soumission), le loader sera déjà caché
+            hideLoader();
+
+            // Focus sur le champ de recherche
+            const keywordInput = document.getElementById('keyword');
+            if (keywordInput) {
+                keywordInput.focus();
+                keywordInput.select();
+            }
+
+            // Afficher le loader si la page met du temps à charger (backup)
+            setTimeout(hideLoader, 5000);
+        });
+
+        // Empêcher la double soumission
+        let formSubmitted = false;
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            if (formSubmitted) {
+                e.preventDefault();
+                return false;
+            }
+            formSubmitted = true;
+        });
+
+        // Gérer les erreurs de navigation
+        window.addEventListener('beforeunload', function() {
+            // S'assurer que le loader est visible pendant le rechargement
+            showLoader();
+        });
+    </script>
+</body>
+</html>

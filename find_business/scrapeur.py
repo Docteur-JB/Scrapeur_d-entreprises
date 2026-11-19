@@ -8,7 +8,7 @@ import re
 def extraire_email_rapide(html_of_):
     soup2 = BeautifulSoup(html_of_, "html.parser")
 
-    #  Chercher les liens mailto
+
     mailtos = soup2.select('a[href^="mailto:"]')
     if mailtos:
         href = mailtos[0].get('href')
@@ -16,7 +16,7 @@ def extraire_email_rapide(html_of_):
             email = href.replace("mailto:", "").split("?")[0].strip()
             return email
 
-    #  Chercher dans header, footer, et aussi les balises <p>, <div>, <span>
+
     sections = soup2.find_all(['header', 'footer', 'p', 'div', 'span'])
     for section in sections:
         text = section.get_text()
@@ -24,7 +24,7 @@ def extraire_email_rapide(html_of_):
         if match:
             return match.group(0).strip()
 
-    # Chercher dans les mots-clés "contact", "recrutement"
+
     contact_sections = soup2.find_all(string=re.compile("(contact|recrutement)", re.I))
     for section in contact_sections:
         parent_text = section.parent.get_text()
@@ -32,7 +32,7 @@ def extraire_email_rapide(html_of_):
         if match:
             return match.group(0).strip()
 
-    #  Chercher partout dans le HTML (fallback)
+
     all_text = soup2.get_text()
     match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", all_text)
     if match:
@@ -88,17 +88,17 @@ def go_to_business(name_name_name, paaage) :
 
         else:
             paaage.wait_for_load_state("load")
-            paaage.mouse.wheel(0, 2000)  # scroll vertical
+            paaage.mouse.wheel(0, 2000)
             time.sleep(1)
             paaage.wait_for_load_state("load")
-            paaage.mouse.wheel(0, 2000)  # scroll vertical
+            paaage.mouse.wheel(0, 2000)
             time.sleep(1)
             paaage.wait_for_load_state("load")
-            paaage.mouse.wheel(0, 2000)  # scroll vertical
+            paaage.mouse.wheel(0, 2000)
             time.sleep(1)
-            paaage.mouse.wheel(0, 2000)  # scroll vertical
+            paaage.mouse.wheel(0, 2000)
             time.sleep(1)
-            paaage.mouse.wheel(0, 2000)  # scroll vertical
+            paaage.mouse.wheel(0, 2000)
             time.sleep(1)
 
             htmls = paaage.content()
@@ -215,7 +215,7 @@ def scroll(paage , endd_selector):
         time.sleep(1)  # laisser le temps au contenu de charger
 
     else:
-        print("⚠️ Nombre max de scroll atteint sans trouver la fin.")
+        print("Nombre max de scroll atteint sans trouver la fin.")
 
 
 def main(keywordd) :
